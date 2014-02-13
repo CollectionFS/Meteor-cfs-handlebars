@@ -6,9 +6,11 @@ Package.on_use(function(api) {
   "use strict";
   api.use(['underscore', 'templating', 'handlebars', 'collectionFS'], 'client');
   api.add_files([
-    'templates.html',
-    'numeral.js',
-    'handlebars.js'
+    // 'templates.html',
+    // 'numeral.js',
+    // 'handlebars.js'
+    'helpers.html',
+    'helpers.js'
   ], 'client');
 });
 

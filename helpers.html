@@ -1,0 +1,10 @@
+<template name="FS.inputFile">
+  <input name="files" id="files" type="file" {{options class multiple}}/>
+  <input id="{{id}}" name="{{name}}" type="hidden" value="[]"/>
+</template>
+
+<template name="dropzone">
+  <div id="dropzone" class="dropzone">
+    <div style="text-align: center; color: gray;">Drop file to upload</div>
+  </div>
+</template>
