@@ -1,50 +1,24 @@
 "use strict";
 if (typeof Handlebars !== 'undefined') {
-  //Usage (default format string, master copy):
+  //Usage (default format string, original file):
   //{{cfsFormattedSize}} (with FS.File as current context)
-  //Usage (default format string, another copy):
-  //{{cfsFormattedSize "copyName"}} (with FS.File as current context)
+  //Usage (default format string, file stored in the specified store):
+  //{{cfsFormattedSize store="storeName"}} (with FS.File as current context)
   //Usage (any format string supported by numeral.format):
   //{{cfsFormattedSize formatString=formatString}} (with FS.File as current context)
-  Handlebars.registerHelper('cfsFormattedSize', function(copyName, opts) {
+  Handlebars.registerHelper('cfsFormattedSize', function(opts) {
     var self = this;
 
-    if (!opts) {
-      opts = copyName;
-      copyName = null;
-    }
-
     if (!(self instanceof FS.File)) {
-      throw new Error("cfsFileUrl helper must be used with a FS.File context");
+      throw new Error("cfsFormattedSize helper must be used with a FS.File context");
     }
 
-    var hash, formatString, size, copy;
-
-    if (typeof copyName !== "string") {
-      copyName = "_master";
-    }
+    var hash = opts.hash || {};
+    var copyInfo = (self.copies || {})[hash.store] || {};
+    var size = copyInfo.size || self.size || 0;
+    var formatString = hash.formatString || '0.00 b';
     
-    var copy = (self.copies || {})[copyName] || {};
-    size = copy.size || 0;
-    hash = opts.hash || {};
-    formatString = hash.formatString || '0.00 b';
     return numeral(size).format(formatString);
-  });
-
-  //Usage: {{cfsFileUrl}} (with FS.File as current context)
-  Handlebars.registerHelper('cfsFileUrl', function(copyName) {
-    var self = this;
-
-    if (!(self instanceof FS.File)) {
-      throw new Error("cfsFileUrl helper must be used with a FS.File context");
-    }
-
-    return self.url(copyName);
-  });
-
-  //Usage: {{cfsIsImage}} (with FS.File as current context)
-  Handlebars.registerHelper('cfsIsImage', function() {
-    return this.isImage();
   });
 
   //Usage: {{cfsIsUploading}} (with FS.File as current context or not for overall)
@@ -57,11 +31,11 @@ if (typeof Handlebars !== 'undefined') {
   });
 
   //Usage: {{cfsIsDownloading}} (with FS.File as current context or not for overall)
-  //Usage: {{cfsIsDownloading copy="copyName"}}
+  //Usage: {{cfsIsDownloading store="storeName"}}
   Handlebars.registerHelper('cfsIsDownloading', function(opts) {
     var hash = opts.hash || {};
     if (this instanceof FS.File) {
-      return FS.downloadQueue.isDownloadingFile(this, hash.copy);
+      return FS.downloadQueue.isDownloadingFile(this, hash.store);
     } else {
       return FS.downloadQueue.isRunning();
     }
@@ -78,11 +52,11 @@ if (typeof Handlebars !== 'undefined') {
   });
 
   //Usage: {{cfsDownloadProgress}} (with FS.File as current context or not for overall)
-  //Usage: {{cfsDownloadProgress copy="copyName"}}
+  //Usage: {{cfsDownloadProgress store="storeName"}}
   Handlebars.registerHelper('cfsDownloadProgress', function(opts) {
     var hash = opts.hash || {};
     if (this instanceof FS.File) {
-      return FS.downloadQueue.progress(this, hash.copy);
+      return FS.downloadQueue.progress(this, hash.store);
     } else {
       return FS.downloadQueue.progress();
     }
@@ -91,9 +65,14 @@ if (typeof Handlebars !== 'undefined') {
   //Usage: {{cfsDownloadProgressBar attribute=value}} (with FS.File as current context or not for overall)
   Handlebars.registerHelper('cfsDownloadProgressBar', function(opts) {
     var hash = opts.hash || {};
+    
+    var storeName = hash.store;
+    if ("store" in hash)
+      delete hash.store;
+    
     return new Handlebars.SafeString(Template._cfsDownloadProgressBar({
       fsFile: this,
-      copyName: hash.copy,
+      storeName: storeName,
       attributes: objToAttributes(hash)
     }));
   });
@@ -149,19 +128,19 @@ if (typeof Handlebars !== 'undefined') {
 
   ////Usage:
   //{{cfsDownloadButton}} (with FS.File as current context)
-  //Supported Options: copy, content, any attribute
+  //Supported Options: store, content, any attribute
   Handlebars.registerHelper('cfsDownloadButton', function(opts) {
     var hash = opts.hash || {};
     hash["class"] = hash["class"] ? hash["class"] + ' cfsDownloadButton' : 'cfsDownloadButton';
     var content = hash.content || "Download";
     if ("content" in hash)
       delete hash.content;
-    var copyName = hash.copy || "_master";
-    if ("copy" in hash)
-      delete hash.copy;
+    var storeName = hash.store;
+    if ("store" in hash)
+      delete hash.store;
     return new Handlebars.SafeString(Template._cfsDownloadButton({
       fsFile: this,
-      copyName: copyName,
+      storeName: storeName,
       content: content,
       attributes: objToAttributes(hash)
     }));
@@ -170,14 +149,14 @@ if (typeof Handlebars !== 'undefined') {
   Template._cfsDownloadButton.events({
     'click .cfsDownloadButton': function(event, template) {
       var fsFile = template.data.fsFile;
-      var copyName = template.data.copyName;
+      var storeName = template.data.storeName;
       if (!fsFile) {
         return false;
       }
 
-      // Kick off download of current copy, and when it's done, tell the browser
-      // to save the file in the downloads folder.
-      fsFile.get(copyName);
+      // Kick off download from requested store, and when it's done,
+      // tell the browser to save the file in the downloads folder.
+      fsFile.get({storeName: storeName});
 
       return false;
     }
@@ -186,7 +165,8 @@ if (typeof Handlebars !== 'undefined') {
   Template._cfsFileInput.events({
     'change .cfsFileInput': function(event, template) {
       var self = this;
-      var files = event.target.files, fsCollection = template.data.fsCollection;
+      var files = (event.originalEvent || event).target.files;
+      var fsCollection = template.data.fsCollection;
 
       if (!files)
         throw new Error("cfsFileInput Helper: no files");
@@ -202,8 +182,9 @@ if (typeof Handlebars !== 'undefined') {
             fsFile.metadata[key] = value;
           });
         }
-        fsCollection.insert(fsFile, function (err) {
-          if (err) throw err;
+        fsCollection.insert(fsFile, function(err) {
+          if (err)
+            throw err;
         });
       });
 
@@ -215,7 +196,7 @@ if (typeof Handlebars !== 'undefined') {
   Handlebars.registerHelper('cfsFileInput', function(fsCollection, metadata, options) {
     var hash;
 
-    if(!fsCollection instanceof FS.Collection){
+    if (!fsCollection instanceof FS.Collection) {
       throw new Error("cfsFileInput helper requires an instance of FS.Collection as its first parameter");
     }
 
@@ -224,10 +205,14 @@ if (typeof Handlebars !== 'undefined') {
       metadata = {};
     }
 
-    hash = options.hash;
-
-    hash = hash || {};
+    hash = options.hash || {};
     hash["class"] = hash["class"] ? hash["class"] + ' cfsFileInput' : 'cfsFileInput';
+
+    // Add "accept" attribute from collection filter
+    var filter = fsCollection.options.filter;
+    if (filter) {
+      hash.accept = filter.allow.contentTypes.join();
+    }
 
     metadata = _(metadata).isObject() ? metadata : {};
 
@@ -235,6 +220,43 @@ if (typeof Handlebars !== 'undefined') {
       fsCollection: fsCollection,
       attributes: objToAttributes(hash),
       metadata: metadata
+    }));
+  });
+
+  Template._cfsFileInputResume.events({
+    'change .cfsFileInput': function(event, template) {
+      var files = (event.originalEvent || event).target.files;
+      var fsFile = template.data.fsFile;
+
+      if (!files)
+        throw new Error("cfsFileInput Helper: no files");
+
+      fsFile.resume(files[0]);
+
+      event.target.parentElement.reset();
+    }
+  });
+
+  //Usage: {{cfsFileInputResume attribute=value}} (with FS.File as current context)
+  Handlebars.registerHelper('cfsFileInputResume', function(options) {
+    var hash = options.hash || {}, fsFile = this;
+
+    if (!fsFile)
+      throw new Error("cfsFileInputResume Helper: no bound FS.File");
+
+    hash["class"] = hash["class"] ? hash["class"] + ' cfsFileInput' : 'cfsFileInput';
+
+    if (fsFile.isMounted()) {
+      // Add "accept" attribute from collection filter
+      var filter = fsFile.collection.options.filter;
+      if (filter) {
+        hash.accept = filter.allow.contentTypes.join();
+      }
+    }
+
+    return new Handlebars.SafeString(Template._cfsFileInputResume({
+      fsFile: fsFile,
+      attributes: objToAttributes(hash)
     }));
   });
 
@@ -247,10 +269,10 @@ var objToAttributes = function(obj) {
     return "";
   }
   var a = "";
-  var space = null;
+  var space = "";
   _.each(obj, function(value, key) {
     a += space + key + '="' + value + '"';
-    if(! space){
+    if (!space.length) {
       space = " ";
     }
   });

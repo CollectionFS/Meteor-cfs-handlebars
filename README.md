@@ -26,30 +26,64 @@ $ mrt add cfs-handlebars
 
 ## General FS.File Helpers
 
-### cfsFileUrl
+### url
 
 Returns the HTTP file URL for the current FS.File. Requires that the `useHTTP` option
-be set to `true` for the corresponding FS.Collection instance.
+be set to `true` for the corresponding FS.Collection instance. (It is by
+default.)
 
-Use with a `FS.File` as the current context.
+Use with an `FS.File` instance as the current context.
 
-Specify a `copy` attribute to get the URL for a specific copy. If you don't
-specify the copy name, the URL will be for the copy in the master store.
-
-```
-{{cfsFileUrl}}
-{{cfsFileUrl copy="thumbnail"}}
-```
-
-### cfsIsImage
-
-Returns true if the current FS.File has a content type that begins with
-`image/`.
-
-Use with a `FS.File` as the current context.
+Specify a `store` attribute to get the URL for a specific store. If you don't
+specify the store name, the URL will be for the copy in the first defined store.
 
 ```
-{{#if cfsIsImage}}
+{{url}}
+{{url store="thumbnail"}}
+```
+
+### isImage
+
+Returns true if the copy of this file in the specified store has an image
+content type. If the file object is unmounted or was not saved in the specified
+store, the content type of the original file is checked instead.
+
+Use with an `FS.File` instance as the current context.
+
+```
+{{#if isImage}}
+{{/if}}
+{{#if isImage store='thumbnail'}}
+{{/if}}
+```
+
+### isAudio
+
+Returns true if the copy of this file in the specified store has an audio
+content type. If the file object is unmounted or was not saved in the specified
+store, the content type of the original file is checked instead.
+
+Use with an `FS.File` instance as the current context.
+
+```
+{{#if isImage}}
+{{/if}}
+{{#if isImage store='thumbnail'}}
+{{/if}}
+```
+
+### isVideo
+
+Returns true if the copy of this file in the specified store has a video
+content type. If the file object is unmounted or was not saved in the specified
+store, the content type of the original file is checked instead.
+
+Use with an `FS.File` instance as the current context.
+
+```
+{{#if isImage}}
+{{/if}}
+{{#if isImage store='thumbnail'}}
 {{/if}}
 ```
 
@@ -61,8 +95,8 @@ numeral.js. If you don't specify formatString, a default format string
 
 Use with a `FS.File` as the current context.
 
-You can specify a copy name as the first positional argument. If you don't, the
-size of the master copy is used.
+Specify a `store` attribute to get the size for a specific store. If you don't
+specify the store name, the size of the original uploaded file is used.
 
 ```
 {{cfsFormattedSize}}
@@ -71,13 +105,7 @@ size of the master copy is used.
 --OR--
 
 ```
-{{cfsFormattedSize "thumbnail"}}
-```
-
---OR--
-
-```
-{{cfsFormattedSize formatString=formatString}}
+{{cfsFormattedSize store="thumbnail" formatString=formatString}}
 ```
 
 ## Upload Helpers
@@ -86,7 +114,7 @@ size of the master copy is used.
 
 When used with a `FS.File` as the current context, returns true if
 the current FS.File is being uploaded from this client. When used
-outside of a `FS.File` context, returns true if **any** files are being
+outside of a `FS.File` context, returns true if *any* files are being
 uploaded from this client.
 
 ```
@@ -143,19 +171,20 @@ True if the upload queue is paused.
 
 When used with a `FS.File` as the current context, returns true if
 the current FS.File is being downloaded from this client. When used
-outside of a `FS.File` context, returns true if **any** files are being
+outside of a `FS.File` context, returns true if *any* files are being
 downloaded from this client.
 
-When used with a `FS.File` as the current context, specify a `copy`
-attribute to check whether a specific copy is downloading. If you don't
-specify the copy name, the copy in the master store is used.
+When used with a `FS.File` as the current context, you **must** specify a `store`
+attribute.
 
 ```
 {{#if cfsIsDownloading}}
 {{/if}}
 
-{{#if cfsIsDownloading copy="thumbnail"}}
-{{/if}}
+{{#with myFSFile}}
+  {{#if cfsIsDownloading store="thumbnail"}}
+  {{/if}}
+{{/with}}
 ```
 
 ### cfsDownloadProgress
@@ -166,18 +195,19 @@ When used with a `FS.File` as the current context, returns the progress
 for that `FS.File`. When used outside of a `FS.File` context,
 returns total progress for all files that are being downloaded from this client.
 
-When used with a `FS.File` as the current context, specify a `copy`
-attribute to get the download progress for a specific copy. If you don't
-specify the copy name, the copy in the master store is used.
+When used with a `FS.File` as the current context, you **must** specify a `store`
+attribute.
 
 ```
 {{#if cfsIsDownloading}}
 Download Progress: {{cfsDownloadProgress}}%
 {{/if}}
 
-{{#if cfsIsDownloading copy="thumbnail"}}
-Download Progress: {{cfsDownloadProgress copy="thumbnail"}}%
+{{#each files}}
+{{#if cfsIsDownloading store="thumbnail"}}
+Download Progress: {{cfsDownloadProgress store="thumbnail"}}%
 {{/if}}
+{{/each}}
 ```
 
 ### cfsDownloadProgressBar
@@ -188,9 +218,8 @@ When used with a `FS.File` as the current context, shows the progress
 for that `FS.File`. When used outside of a `FS.File` context,
 shows total progress for all files that are being downloaded from this client.
 
-When used with a `FS.File` as the current context, specify a `copy`
-attribute to show the download progress for a specific copy. If you don't
-specify the copy name, the copy in the master store is used.
+When used with a `FS.File` as the current context, you **must** specify a `store`
+attribute.
 
 Any other attributes you specify on the helper (for example, "class") will be
 transferred to attributes on the resulting progress element.
@@ -203,6 +232,18 @@ transferred to attributes on the resulting progress element.
 {{#if cfsIsDownloading copy="thumbnail"}}
 {{cfsDownloadProgressBar copy="thumbnail"}} Downloading...
 {{/if}}
+```
+
+```
+{{#if cfsIsDownloading}}
+{{cfsDownloadProgressBar}} Downloading...
+{{/if}}
+
+{{#each files}}
+{{#if cfsIsDownloading store="thumbnail"}}
+{{cfsDownloadProgressBar store="thumbnail"}} Downloading...
+{{/if}}
+{{/each}}
 ```
 
 ### cfsDownloadsArePaused
@@ -246,9 +287,9 @@ shim which should support most modern browsers.
 Specify a `content` attribute to set the button element content. If you don't
 specify content, the button will say "Download".
 
-Specify a `copy` attribute to indicate the name of the copy you want to
-download. If you don't specify a copy name, it will download the file from the
-master store.
+Specify a `store` attribute to indicate the store from which you want to
+download. If you don't specify a store name, it will download the file from the
+first store listed in the collection's `stores` array.
 
 Any other attributes you specify on the helper (for example, "class") will be
 transferred to attributes on the resulting `<button>` element.
@@ -259,7 +300,7 @@ Examples:
 {{cfsDownloadButton}}
 {{cfsDownloadButton class="btn"}}
 {{cfsDownloadButton content="Download This Image" class="btn"}}
-{{cfsDownloadButton copy="thumbnail" class="btn"}}
+{{cfsDownloadButton store="thumbnail" class="btn"}}
 ```
 
 ### cfsFileInput
@@ -292,6 +333,6 @@ Template.images.myImageFiles = function() {
 };
 
 Template.images.metadata = {
-	userId:Meteor.userId()
+  userId:Meteor.userId()
 };
 ```
