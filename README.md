@@ -28,9 +28,7 @@ $ mrt add cfs-handlebars
 
 ### url
 
-Returns the HTTP file URL for the current FS.File. Requires that the `useHTTP` option
-be set to `true` for the corresponding FS.Collection instance. (It is by
-default.)
+Returns the HTTP file URL for the current FS.File.
 
 Use with an `FS.File` instance as the current context.
 
