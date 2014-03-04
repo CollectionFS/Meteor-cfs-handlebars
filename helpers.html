@@ -8,3 +8,17 @@
     <div style="text-align: center; color: gray;">Drop file to upload</div>
   </div>
 </template>
+
+<template name="cfsDeleteButton">
+  {{#if content}}
+  {{#_cfsDeleteButton context=.. atts=this}}
+  {{> content}}
+  {{/_cfsDeleteButton}}
+  {{else}}
+  {{> _cfsDeleteButton context=.. atts=this}}
+  {{/if}}
+</template>
+
+<template name="_cfsDeleteButton">
+  <button type="button" {{atts}}>{{#with content}}{{> this}}{{else}}Delete{{/with}}</button>
+</template>

@@ -95,37 +95,6 @@ if (typeof Handlebars !== 'undefined') {
     }));
   });
 
-  //Usage: {{cfsDeleteButton}} (with FS.File as current context)
-  //Supported Options: content, any attribute
-  Handlebars.registerHelper('cfsDeleteButton', function(opts) {
-    var hash = opts.hash || {};
-    hash["class"] = hash["class"] ? hash["class"] + ' cfsDeleteButton' : 'cfsDeleteButton';
-    var content = hash.content || "Delete";
-    if ("content" in hash)
-      delete hash.content;
-    return new Handlebars.SafeString(Template._cfsDeleteButton({
-      fsFile: this,
-      content: content,
-      attributes: objToAttributes(hash)
-    }));
-  });
-
-  Template._cfsDeleteButton.events({
-    'click .cfsDeleteButton': function(event, template) {
-      var fsFile = template.data.fsFile;
-      if (!fsFile) {
-        return false;
-      }
-      fsFile.remove();
-      return false;
-    }
-  });
-
-  Template._cfsDownloadProgressBar.preserve(['progress']);
-  Template._cfsUploadProgressBar.preserve(['progress']);
-  Template._cfsDeleteButton.preserve(['button']);
-  Template._cfsDownloadButton.preserve(['button']);
-
   ////Usage:
   //{{cfsDownloadButton}} (with FS.File as current context)
   //Supported Options: store, content, any attribute

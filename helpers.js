@@ -67,3 +67,18 @@ _uploadFiles = function(files, collectionFS) {
 
 //         return dropbox;        
 // };
+
+Handlebars.registerHelper('cfsDeleteButton', function () {
+  throw new Error("Use {{> cfsDeleteButton}} instead of {{cfsDeleteButton}}");
+});
+
+Template.cfsDeleteButton.events({
+  'click button': function(event, template) {
+    var fsFile = this.context;
+    if (!fsFile || !(fsFile instanceof FS.File)) {
+      return false;
+    }
+    fsFile.remove();
+    return false;
+  }
+});
