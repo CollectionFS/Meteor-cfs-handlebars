@@ -3,7 +3,7 @@
 	"description": "Handlebars helpers for CollectionFS",
 	"homepage": "https://github.com/CollectionFS/Meteor-cfs-handlebars",
 	"author": "Eric Dobbertin (https://github.com/aldeed), Morten Henriksen (https://github.com/raix)",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-handlebars.git",
 	"packages": {
 		"cfs-base-package": {}
