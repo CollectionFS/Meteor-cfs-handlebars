@@ -6,9 +6,6 @@
 	"version": "0.0.2",
 	"git": "https://github.com/CollectionFS/Meteor-cfs-handlebars.git",
 	"packages": {
-		"cfs-base-package": {
-			"git": "https://github.com/CollectionFS/Meteor-cfs-base-package.git",
-			"branch": "master"
-		}
+		"cfs-base-package": {}
 	}
 }
