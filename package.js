@@ -1,10 +1,11 @@
 Package.describe({
+  version: '0.0.0',
   summary: "Handlebars helpers for CollectionFS"
 });
 
 Package.on_use(function(api) {
   "use strict";
-  api.use(['underscore', 'templating', 'handlebars', 'collectionFS'], 'client');
+  api.use(['underscore', 'templating', 'handlebars', 'collectionfs'], 'client');
   api.add_files([
     // 'templates.html',
     // 'numeral.js',
