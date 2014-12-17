@@ -12,7 +12,7 @@ Package.onUse(function(api) {
     'underscore',
     'templating',
     'handlebars',
-    'cfs:standard-packages@0.0.2'
+    'cfs:standard-packages@0.5.0'
   ], 'client');
   api.addFiles([
     // 'templates.html',
