@@ -1,19 +1,20 @@
 Package.describe({
   name: 'cfs:handlebars',
-  version: '0.0.0',
-  summary: "Handlebars helpers for CollectionFS"
+  version: '0.0.5',
+  summary: 'Handlebars helpers for CollectionFS',
+  git: 'https://github.com/CollectionFS/Meteor-cfs-handlebars.git'
 });
 
-Package.on_use(function(api) {
-  api.versionsFrom('METEOR@0.9.1');
+Package.onUse(function(api) {
+  api.versionsFrom('1.0');
 
   api.use([
     'underscore',
     'templating',
     'handlebars',
-    'cfs:standard-packages@0.0.0'
+    'cfs:standard-packages@0.0.2'
   ], 'client');
-  api.add_files([
+  api.addFiles([
     // 'templates.html',
     // 'numeral.js',
     // 'handlebars.js'
@@ -22,7 +23,7 @@ Package.on_use(function(api) {
   ], 'client');
 });
 
-Package.on_test(function(api) {
+Package.onTest(function(api) {
   api.use(['cfs:handlebars', 'test-helpers', 'tinytest'], 'client');
-  api.add_files('tests.js', 'client');
+  api.addFiles('tests.js', 'client');
 });
